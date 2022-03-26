@@ -37,7 +37,17 @@ public class FollowService {
     }
 
     public FollowingResponse getFollowing(FollowingRequest request) {
-        return followDAO.getFollowing(request);
+        Pair<List<String>, Boolean> returnedValues = followDAO.getFollowing(request.getFollowerAlias(), request.getLimit(), request.getLastFolloweeAlias());
+        // TODO: get users from userDAO
+        List<User> followees = new ArrayList<>();
+        try {
+            for (String userHandle : returnedValues.getFirst()) {
+                followees.add(userDAO.getUser(userHandle));
+            }
+        } catch (Exception e) {
+            return new FollowingResponse(e.getMessage());
+        }
+        return new FollowingResponse(followees, returnedValues.getSecond());
     }
 
     public FollowersResponse getFollowers(FollowersRequest request) {
@@ -50,12 +60,10 @@ public class FollowService {
         List<User> users = new ArrayList<>(followers.getFirst().size());
 
         try {
-            // TODO: make this better lol
             for (String alias : followers.getFirst()) {
                 users.add(userDAO.getUser(alias));
             }
 
-            // TODO: add a last user parameter to the followers response
             return new FollowersResponse(users, followers.getSecond());
         } catch (Exception e) {
             e.printStackTrace();

@@ -17,13 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 import edu.byu.cs.tweeter.model.net.request.FollowRequest;
-import edu.byu.cs.tweeter.model.net.request.FollowingRequest;
 import edu.byu.cs.tweeter.model.net.request.GetFollowersCountRequest;
 import edu.byu.cs.tweeter.model.net.request.GetFollowingCountRequest;
 import edu.byu.cs.tweeter.model.net.request.IsFollowerRequest;
 import edu.byu.cs.tweeter.model.net.request.UnfollowRequest;
 import edu.byu.cs.tweeter.model.net.response.FollowResponse;
-import edu.byu.cs.tweeter.model.net.response.FollowingResponse;
 import edu.byu.cs.tweeter.model.net.response.GetFollowersCountResponse;
 import edu.byu.cs.tweeter.model.net.response.GetFollowingCountResponse;
 import edu.byu.cs.tweeter.model.net.response.IsFollowerResponse;
@@ -70,25 +68,48 @@ public class FollowDynamoDAO implements IFollowDAO {
     }
 
     @Override
-    public FollowingResponse getFollowing(FollowingRequest request) {
-        assert request.getLimit() > 0;
-        return null;
+    public Pair<List<String>, Boolean> getFollowing(String followerHandle, int limit, String lastReturnedFollowee) {
+        List<String> followees = new ArrayList<>();
+
+        boolean hasMorePages = false;
+
+        if (limit > 0) {
+            HashMap<String, Object> valueMap = new HashMap<>();
+            valueMap.put(":F", followerHandle);
+
+            QuerySpec querySpec = new QuerySpec()
+                    .withValueMap(valueMap)
+                    .withKeyConditionExpression("follower_handle = :F")
+                    .withScanIndexForward(true)
+                    .withMaxResultSize(DynamoDBHelper.PAGE_SIZE);
+
+            ItemCollection<QueryOutcome> items = DynamoDBHelper.getInstance()
+                    .getFollowTable()
+                    .query(querySpec);
+
+            Iterator<Item> iterator = items.iterator();
+            Item item;
+            while (iterator.hasNext()) {
+                System.out.println("Iterator has next");
+                item = iterator.next();
+                followees.add(item.getString("followee_handle"));
+                System.out.println("Iterator returned the following follower_alias: " + item);
+            }
+        }
+
+        return new Pair<>(followees, hasMorePages);
     }
 
     @Override
-    public Pair<List<String>, Boolean> getFollowers(String followeeAlias, int limit, String lastReturnedFollower) {
-        List<String> followees = new ArrayList<>(limit);
+    public Pair<List<String>, Boolean> getFollowers(String followeeHandle, int limit, String lastReturnedFollower) {
+        List<String> followers = new ArrayList<>(limit);
         System.out.println("Attempting to get da followers");
 
         boolean hasMorePages = false;
 
         if (limit > 0) {
             HashMap<String, Object> valueMap = new HashMap<>();
-            valueMap.put(":F", followeeAlias);
-
-            // TODO: get aliases from follows table
-            // TODO: make sure results are sorted
-            // TODO: process the last returned result
+            valueMap.put(":F", followeeHandle);
 
             System.out.println("Creating query spec");
             QuerySpec querySpec = new QuerySpec()
@@ -116,14 +137,14 @@ public class FollowDynamoDAO implements IFollowDAO {
             while (iterator.hasNext()) {
                 System.out.println("Iterator has next");
                 item = iterator.next();
-                followees.add(item.getString("follower_handle"));
-                System.out.println("Iterator returned the following follower_alias: " + item.toString());
+                followers.add(item.getString("follower_handle"));
+                System.out.println("Iterator returned the following follower_alias: " + item);
             }
             // need to get a boolean confirming whether or not there are more pages; can return the
-            // list of followees and process the last returned object from that in the service layer
+            // list of followers and process the last returned object from that in the service layer
         }
 
-        return new Pair<>(followees, hasMorePages);
+        return new Pair<>(followers, hasMorePages);
     }
 
     @Override
