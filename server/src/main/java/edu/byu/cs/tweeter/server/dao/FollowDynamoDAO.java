@@ -4,6 +4,7 @@ import com.amazonaws.services.dynamodbv2.document.BatchWriteItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.DeleteItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
+import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
 import com.amazonaws.services.dynamodbv2.document.TableWriteItems;
@@ -16,11 +17,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import edu.byu.cs.tweeter.model.net.request.FollowRequest;
 import edu.byu.cs.tweeter.model.net.request.GetFollowersCountRequest;
 import edu.byu.cs.tweeter.model.net.request.GetFollowingCountRequest;
 import edu.byu.cs.tweeter.model.net.request.IsFollowerRequest;
-import edu.byu.cs.tweeter.model.net.request.UnfollowRequest;
 import edu.byu.cs.tweeter.model.net.response.FollowResponse;
 import edu.byu.cs.tweeter.model.net.response.GetFollowersCountResponse;
 import edu.byu.cs.tweeter.model.net.response.GetFollowingCountResponse;
@@ -36,16 +35,16 @@ public class FollowDynamoDAO implements IFollowDAO {
     System.Logger logger = System.getLogger("FollowDynamoDAO");
 
     @Override
-    public FollowResponse follow(FollowRequest request) {
+    public FollowResponse follow(String followerAlias, String followeeAlias) {
         // don't need to query to see if relationship already exists;
         // method will not be called if relationship exists
         try {
-            System.out.println(HASH_KEY_VAL + ": " + request.getFollowerAlias());
-            System.out.println(RANGE_KEY_VAL + ": " + request.getFolloweeAlias());
+            System.out.println(HASH_KEY_VAL + ": " + followerAlias);
+            System.out.println(RANGE_KEY_VAL + ": " + followeeAlias);
             PutItemOutcome outcome = DynamoDBHelper.getInstance().getFollowTable().putItem(
                     new Item().withPrimaryKey(
-                            HASH_KEY_VAL, request.getFollowerAlias(),
-                            RANGE_KEY_VAL, request.getFolloweeAlias()
+                            HASH_KEY_VAL, followerAlias,
+                            RANGE_KEY_VAL, followeeAlias
                     )
             );
             return new FollowResponse(true);
@@ -55,11 +54,11 @@ public class FollowDynamoDAO implements IFollowDAO {
     }
 
     @Override
-    public UnfollowResponse unfollow(UnfollowRequest request) {
+    public UnfollowResponse unfollow(String followerAlias, String followeeAlias) {
         try {
             DeleteItemOutcome outcome = DynamoDBHelper.getInstance().getFollowTable().deleteItem(
-                    HASH_KEY_VAL, request.getFollowerAlias(),
-                    RANGE_KEY_VAL, request.getFolloweeAlias()
+                    HASH_KEY_VAL, followerAlias,
+                    RANGE_KEY_VAL, followeeAlias
             );
             return new UnfollowResponse(true);
         } catch (Exception e) {
@@ -82,6 +81,18 @@ public class FollowDynamoDAO implements IFollowDAO {
                     .withKeyConditionExpression("follower_handle = :F")
                     .withScanIndexForward(true)
                     .withMaxResultSize(DynamoDBHelper.PAGE_SIZE);
+            if (lastReturnedFollowee != null && !lastReturnedFollowee.equals("")) {
+                System.out.println("Adding exclusive start key");
+                querySpec = querySpec.withExclusiveStartKey(
+                        new PrimaryKey(
+                                HASH_KEY_VAL,
+                                followerHandle,
+                                RANGE_KEY_VAL,
+                                lastReturnedFollowee
+                        )
+                );
+                System.out.println("Added exclusive start key " + followerHandle + " : " + lastReturnedFollowee);
+            }
 
             ItemCollection<QueryOutcome> items = DynamoDBHelper.getInstance()
                     .getFollowTable()
@@ -94,6 +105,10 @@ public class FollowDynamoDAO implements IFollowDAO {
                 item = iterator.next();
                 followees.add(item.getString("followee_handle"));
                 System.out.println("Iterator returned the following follower_alias: " + item);
+            }
+
+            if (items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey() != null) {
+                hasMorePages = true;
             }
         }
 
@@ -118,11 +133,18 @@ public class FollowDynamoDAO implements IFollowDAO {
                     .withScanIndexForward(true)
                     .withMaxResultSize(DynamoDBHelper.PAGE_SIZE);
             System.out.println("Created query spec");
-//            if (lastReturnedFollower != null) {
-//                System.out.println("Adding exclusive start key");
-//                querySpec = querySpec.withExclusiveStartKey(RANGE_KEY_VAL, lastReturnedFollower);
-//                System.out.println("Added exclusive start key");
-//            }
+            if (lastReturnedFollower != null && !lastReturnedFollower.equals("")) {
+                System.out.println("Adding exclusive start key");
+                querySpec = querySpec.withExclusiveStartKey(
+                        new PrimaryKey(
+                                RANGE_KEY_VAL,
+                                followeeHandle,
+                                HASH_KEY_VAL,
+                                lastReturnedFollower
+                        )
+                );
+                System.out.println("Added exclusive start key");
+            }
 
             System.out.println("Querying for da items");
             ItemCollection<QueryOutcome> items = DynamoDBHelper.getInstance()
@@ -140,8 +162,10 @@ public class FollowDynamoDAO implements IFollowDAO {
                 followers.add(item.getString("follower_handle"));
                 System.out.println("Iterator returned the following follower_alias: " + item);
             }
-            // need to get a boolean confirming whether or not there are more pages; can return the
-            // list of followers and process the last returned object from that in the service layer
+
+            if (items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey() != null) {
+                hasMorePages = true;
+            }
         }
 
         return new Pair<>(followers, hasMorePages);

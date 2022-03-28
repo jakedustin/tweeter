@@ -10,4 +10,5 @@ public interface IUserDAO {
     User getUser(String userAlias) throws Exception;
     User postNewUser(RegisterUserRequest request) throws Exception;
     void addUserBatch(List<UserDTO> users);
+    void deleteUsers(List<String> userHandles);
 }

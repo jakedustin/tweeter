@@ -1,6 +1,7 @@
 package edu.byu.cs.tweeter.server.dao;
 
 import com.amazonaws.services.dynamodbv2.document.BatchWriteItemOutcome;
+import com.amazonaws.services.dynamodbv2.document.DeleteItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.GetItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
@@ -35,7 +36,7 @@ public class UserDynamoDAO implements IUserDAO {
     }
 
     @Override
-    public User postNewUser(RegisterUserRequest request) throws Exception {
+    public User postNewUser(RegisterUserRequest request) {
         System.out.println("Getting imageUrl");
         String imageUrl = S3ProfilePictureHelper.getInstance()
                 .handleImageString(request.getImage(), request.getUsername());
@@ -54,6 +55,19 @@ public class UserDynamoDAO implements IUserDAO {
                                 .withString("first-name", firstName)
                                 .withString("last-name", lastName)
                                 .withString("image-url", imageUrl));
+    }
+
+    @Override
+    public void deleteUsers(List<String> users) {
+        try {
+            for (String userAlias : users) {
+                DeleteItemOutcome outcome = DynamoDBHelper.getInstance().getFollowTable().deleteItem(
+                        "user-alias", userAlias
+                );
+            }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     @Override

@@ -33,7 +33,7 @@ public class FollowService {
     }
 
     public FollowResponse follow(FollowRequest request) {
-        return followDAO.follow(request);
+        return followDAO.follow(request.getFollowerAlias(), request.getFolloweeAlias());
     }
 
     public FollowingResponse getFollowing(FollowingRequest request) {
@@ -84,6 +84,6 @@ public class FollowService {
     }
 
     public UnfollowResponse unfollow(UnfollowRequest request) {
-        return followDAO.unfollow(request);
+        return followDAO.unfollow(request.getFollowerAlias(), request.getFolloweeAlias());
     }
 }
