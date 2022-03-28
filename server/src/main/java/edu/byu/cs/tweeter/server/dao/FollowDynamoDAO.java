@@ -17,13 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import edu.byu.cs.tweeter.model.net.request.GetFollowersCountRequest;
-import edu.byu.cs.tweeter.model.net.request.GetFollowingCountRequest;
-import edu.byu.cs.tweeter.model.net.request.IsFollowerRequest;
 import edu.byu.cs.tweeter.model.net.response.FollowResponse;
-import edu.byu.cs.tweeter.model.net.response.GetFollowersCountResponse;
-import edu.byu.cs.tweeter.model.net.response.GetFollowingCountResponse;
-import edu.byu.cs.tweeter.model.net.response.IsFollowerResponse;
 import edu.byu.cs.tweeter.model.net.response.UnfollowResponse;
 import edu.byu.cs.tweeter.server.dao.helpers.DynamoDBHelper;
 import edu.byu.cs.tweeter.server.dao.interfaces.IFollowDAO;
@@ -172,33 +166,20 @@ public class FollowDynamoDAO implements IFollowDAO {
     }
 
     @Override
-    public GetFollowingCountResponse getFollowingCount(GetFollowingCountRequest request) {
+    public int getFollowingCount(String followerAlias) {
         DynamoDBHelper.getInstance().getFollowTable();
 
-        return null;
+        return 0;
     }
 
     @Override
-    public GetFollowersCountResponse getFollowersCount(GetFollowersCountRequest request) {
+    public int getFollowersCount(String followeeAlias) {
         DynamoDBHelper.getInstance().getFollowTable();
-        return null;
+        return 0;
     }
 
     @Override
-    public IsFollowerResponse isFollower(IsFollowerRequest request) {
-        try {
-            return new IsFollowerResponse(
-                    this.isFollower(
-                            request.getFollower().getAlias(),
-                            request.getFollowee().getAlias())
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new IsFollowerResponse(false, e.getMessage());
-        }
-    }
-
-    private boolean isFollower(String followerAlias, String followeeAlias) {
+    public boolean isFollower(String followerAlias, String followeeAlias) throws Exception {
         return DynamoDBHelper.getInstance().getFollowTable()
                 .getItem(HASH_KEY_VAL, followerAlias, RANGE_KEY_VAL, followeeAlias) != null;
     }

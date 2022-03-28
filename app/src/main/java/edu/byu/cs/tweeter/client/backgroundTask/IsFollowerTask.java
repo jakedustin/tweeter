@@ -63,7 +63,7 @@ public class IsFollowerTask implements Runnable {
     }
 
     private IsFollowerResponse isFollower(AuthToken authToken, User follower, User followee) throws IOException, TweeterRemoteException {
-        IsFollowerRequest request = new IsFollowerRequest(authToken, follower, followee);
+        IsFollowerRequest request = new IsFollowerRequest(authToken, follower.getAlias(), followee.getAlias());
         ServerFacade server = new ServerFacade();
         return server.isFollower(request, "isfollower");
     }

@@ -18,6 +18,7 @@ import edu.byu.cs.tweeter.model.net.response.GetFollowersCountResponse;
 import edu.byu.cs.tweeter.model.net.response.GetFollowingCountResponse;
 import edu.byu.cs.tweeter.model.net.response.IsFollowerResponse;
 import edu.byu.cs.tweeter.model.net.response.UnfollowResponse;
+import edu.byu.cs.tweeter.server.dao.interfaces.IAuthTokenDAO;
 import edu.byu.cs.tweeter.server.dao.interfaces.IDAOFactory;
 import edu.byu.cs.tweeter.server.dao.interfaces.IFollowDAO;
 import edu.byu.cs.tweeter.server.dao.interfaces.IUserDAO;
@@ -26,10 +27,12 @@ import edu.byu.cs.tweeter.server.util.Pair;
 public class FollowService {
     private final IFollowDAO followDAO;
     private final IUserDAO userDAO;
+    private final IAuthTokenDAO authTokenDAO;
 
     public FollowService(IDAOFactory factory) {
         this.followDAO = factory.getFollowDAO();
         this.userDAO = factory.getUserDAO();
+        this.authTokenDAO = factory.getAuthTokenDAO();
     }
 
     public FollowResponse follow(FollowRequest request) {
@@ -37,8 +40,12 @@ public class FollowService {
     }
 
     public FollowingResponse getFollowing(FollowingRequest request) {
+        try {
+            authTokenDAO.verifyAuthToken(request.getAuthToken());
+        } catch (Exception e) {
+            return new FollowingResponse(e.getMessage());
+        }
         Pair<List<String>, Boolean> returnedValues = followDAO.getFollowing(request.getFollowerAlias(), request.getLimit(), request.getLastFolloweeAlias());
-        // TODO: get users from userDAO
         List<User> followees = new ArrayList<>();
         try {
             for (String userHandle : returnedValues.getFirst()) {
@@ -51,12 +58,21 @@ public class FollowService {
     }
 
     public FollowersResponse getFollowers(FollowersRequest request) {
+        // verify auth token
+        try {
+            authTokenDAO.verifyAuthToken(request.getAuthToken());
+        } catch (Exception e) {
+            return new FollowersResponse(e.getMessage());
+        }
+
+        // get list of follower aliases
         Pair<List<String>, Boolean> followers = followDAO.getFollowers(
                 request.getFolloweeAlias(),
                 request.getLimit(),
                 request.getLastFollowerAlias()
         );
 
+        // get list of users using the aliases
         List<User> users = new ArrayList<>(followers.getFirst().size());
 
         try {
@@ -72,15 +88,36 @@ public class FollowService {
     }
 
     public GetFollowingCountResponse getFollowingCount(GetFollowingCountRequest request) {
-        return followDAO.getFollowingCount(request);
+        int followingCount;
+        try {
+            authTokenDAO.verifyAuthToken(request.getAuthToken());
+            followingCount = followDAO.getFollowingCount(request.getFollowerAlias());
+        } catch (Exception e) {
+            return new GetFollowingCountResponse(e.getMessage());
+        }
+        return new GetFollowingCountResponse(followingCount);
     }
 
     public GetFollowersCountResponse getFollowersCount(GetFollowersCountRequest request) {
-        return followDAO.getFollowersCount(request);
+        int followersCount;
+        try {
+            authTokenDAO.verifyAuthToken(request.getAuthToken());
+            followersCount = followDAO.getFollowersCount(request.getFolloweeAlias());
+        } catch (Exception e) {
+            return new GetFollowersCountResponse(e.getMessage());
+        }
+        return new GetFollowersCountResponse(followersCount);
     }
 
     public IsFollowerResponse isFollower(IsFollowerRequest request) {
-        return followDAO.isFollower(request);
+        boolean isFollower;
+        try {
+            authTokenDAO.verifyAuthToken(request.getAuthToken());
+            isFollower = followDAO.isFollower(request.getFollowerAlias(), request.getFolloweeAlias());
+        } catch (Exception e) {
+            return new IsFollowerResponse(false, e.getMessage());
+        }
+        return new IsFollowerResponse(isFollower);
     }
 
     public UnfollowResponse unfollow(UnfollowRequest request) {
