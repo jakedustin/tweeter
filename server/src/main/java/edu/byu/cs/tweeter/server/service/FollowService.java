@@ -130,9 +130,12 @@ public class FollowService {
 
     public UnfollowResponse unfollow(UnfollowRequest request) {
         try {
+            System.out.println("FollowService : Unfollow : Attempting to verify auth token");
             authTokenDAO.verifyAuthToken(request.getAuthToken());
+            System.out.println("FollowService : Unfollow : auth token verified, attempting to adjust following values");
             userDAO.adjustFollowingValue(false, request.getFollowerAlias());
             userDAO.adjustFollowersValue(false, request.getFolloweeAlias());
+            System.out.println("FollowService : Unfollow : successfully modified following values, attempting to remove follow relationship");
             return followDAO.unfollow(request.getFollowerAlias(), request.getFolloweeAlias());
         } catch (Exception e) {
             return new UnfollowResponse(false, e.getMessage());

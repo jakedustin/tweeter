@@ -125,7 +125,7 @@ public class UserDynamoDAO implements IUserDAO {
     public void adjustFollowingValue(boolean isIncrement, String alias) {
         ValueMap valueMap = new ValueMap().withInt(":val", getIntValueOfBoolean(isIncrement));
         UpdateItemSpec updateItemSpec = new UpdateItemSpec().withPrimaryKey("user-alias", alias)
-                .withUpdateExpression("set user.following = user.following + :val")
+                .withUpdateExpression("set following = following + :val")
                 .withValueMap(valueMap);
 
         DynamoDBHelper.getInstance().getUsersTable().updateItem(updateItemSpec);
@@ -135,7 +135,7 @@ public class UserDynamoDAO implements IUserDAO {
     public void adjustFollowersValue(boolean isIncrement, String alias) {
         ValueMap valueMap = new ValueMap().withInt(":val", getIntValueOfBoolean(isIncrement));
         UpdateItemSpec updateItemSpec = new UpdateItemSpec().withPrimaryKey("user-alias", alias)
-                .withUpdateExpression("set user.followers = user.followers + :val")
+                .withUpdateExpression("set followers = followers + :val")
                 .withValueMap(valueMap);
 
         DynamoDBHelper.getInstance().getUsersTable().updateItem(updateItemSpec);
