@@ -168,7 +168,7 @@ public class FollowDynamoDAO implements IFollowDAO {
 
     @Override
     public int getFollowingCount(String followerAlias) {
-        DynamoDBHelper.getInstance().getFollowTable();
+        // GetItemOutcome
 
         return 0;
     }

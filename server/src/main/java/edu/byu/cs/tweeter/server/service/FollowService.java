@@ -96,25 +96,23 @@ public class FollowService {
     }
 
     public GetFollowingCountResponse getFollowingCount(GetFollowingCountRequest request) {
-        int followingCount;
         try {
             authTokenDAO.verifyAuthToken(request.getAuthToken());
-            followingCount = followDAO.getFollowingCount(request.getFollowerAlias());
+            int followingCount = userDAO.getNumFollowing(request.getFollowerAlias());
+            return new GetFollowingCountResponse(followingCount);
         } catch (Exception e) {
             return new GetFollowingCountResponse(e.getMessage());
         }
-        return new GetFollowingCountResponse(followingCount);
     }
 
     public GetFollowersCountResponse getFollowersCount(GetFollowersCountRequest request) {
-        int followersCount;
         try {
             authTokenDAO.verifyAuthToken(request.getAuthToken());
-            followersCount = followDAO.getFollowersCount(request.getFolloweeAlias());
+            int followersCount = userDAO.getNumFollowers(request.getFolloweeAlias());
+            return new GetFollowersCountResponse(followersCount);
         } catch (Exception e) {
             return new GetFollowersCountResponse(e.getMessage());
         }
-        return new GetFollowersCountResponse(followersCount);
     }
 
     public IsFollowerResponse isFollower(IsFollowerRequest request) {

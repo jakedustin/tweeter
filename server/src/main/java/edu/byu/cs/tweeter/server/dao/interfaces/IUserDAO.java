@@ -13,6 +13,8 @@ public interface IUserDAO {
     User postNewUser(RegisterUserRequest request) throws Exception;
     // for testing only
     PutItemOutcome postNewUser(String alias, String firstName, String lastName, String imageUrl) throws Exception;
+    int getNumFollowing(String alias);
+    int getNumFollowers(String alias);
     void adjustFollowingValue(boolean isIncrement, String alias);
     void adjustFollowersValue(boolean isIncrement, String alias);
     void addUserBatch(List<UserDTO> users);

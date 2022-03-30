@@ -141,6 +141,20 @@ public class UserDynamoDAO implements IUserDAO {
         DynamoDBHelper.getInstance().getUsersTable().updateItem(updateItemSpec);
     }
 
+    @Override
+    public int getNumFollowing(String alias) {
+        GetItemOutcome getItemOutcome = DynamoDBHelper.getInstance().getUsersTable()
+                .getItemOutcome("user-alias", alias);
+        return getItemOutcome.getItem().getInt("following");
+    }
+
+    @Override
+    public int getNumFollowers(String alias) {
+        GetItemOutcome getItemOutcome = DynamoDBHelper.getInstance().getUsersTable()
+                .getItemOutcome("user-alias", alias);
+        return getItemOutcome.getItem().getInt("following");
+    }
+
     private int getIntValueOfBoolean(boolean isIncrement) {
         return isIncrement? 1 : -1;
     }
