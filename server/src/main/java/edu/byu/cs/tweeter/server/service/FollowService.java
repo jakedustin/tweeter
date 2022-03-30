@@ -36,7 +36,15 @@ public class FollowService {
     }
 
     public FollowResponse follow(FollowRequest request) {
-        return followDAO.follow(request.getFollowerAlias(), request.getFolloweeAlias());
+        // need method to increment and decrement values
+        try {
+            authTokenDAO.verifyAuthToken(request.getAuthToken());
+            userDAO.adjustFollowingValue(true, request.getFollowerAlias());
+            userDAO.adjustFollowersValue(true, request.getFolloweeAlias());
+            return followDAO.follow(request.getFollowerAlias(), request.getFolloweeAlias());
+        } catch (Exception e) {
+            return new FollowResponse(false, e.getMessage());
+        }
     }
 
     public FollowingResponse getFollowing(FollowingRequest request) {
@@ -121,6 +129,13 @@ public class FollowService {
     }
 
     public UnfollowResponse unfollow(UnfollowRequest request) {
-        return followDAO.unfollow(request.getFollowerAlias(), request.getFolloweeAlias());
+        try {
+            authTokenDAO.verifyAuthToken(request.getAuthToken());
+            userDAO.adjustFollowingValue(false, request.getFollowerAlias());
+            userDAO.adjustFollowersValue(false, request.getFolloweeAlias());
+            return followDAO.unfollow(request.getFollowerAlias(), request.getFolloweeAlias());
+        } catch (Exception e) {
+            return new UnfollowResponse(false, e.getMessage());
+        }
     }
 }

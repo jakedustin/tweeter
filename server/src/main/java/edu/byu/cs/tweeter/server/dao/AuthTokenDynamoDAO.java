@@ -22,7 +22,7 @@ public class AuthTokenDynamoDAO implements IAuthTokenDAO {
     private static final int TIMEOUT_IN_MINUTES = 30;
     private static final SecureRandom secureRandom = new SecureRandom();
     private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder();
-    private static boolean disableAuthentication = false;
+    private static boolean disableAuthentication = true;
 
     public static AuthToken spoofAuthToken(AuthToken authToken, String userAlias) throws Exception {
 

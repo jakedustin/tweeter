@@ -6,6 +6,8 @@ import com.amazonaws.services.dynamodbv2.document.GetItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.TableWriteItems;
+import com.amazonaws.services.dynamodbv2.document.spec.UpdateItemSpec;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 
 import java.lang.System.Logger;
@@ -25,8 +27,8 @@ public class UserDynamoDAO implements IUserDAO {
     private final Logger logger = System.getLogger("UserDynamoDAO");
     @Override
     public User getUser(String username) {
-        String imageUrl = S3ProfilePictureHelper.getInstance().getPublicUrl(username);
-        System.out.println("imageUrl for " + username + ": " + imageUrl);
+//        String imageUrl = S3ProfilePictureHelper.getInstance().getPublicUrl(username);
+//        System.out.println("imageUrl for " + username + ": " + imageUrl);
         GetItemOutcome getItemOutcome = DynamoDBHelper.getInstance().getUsersTable()
                 .getItemOutcome("user-alias", username);
         return new User(getItemOutcome.getItem().get("first-name").toString(),
@@ -35,6 +37,7 @@ public class UserDynamoDAO implements IUserDAO {
                 getItemOutcome.getItem().get("image-url").toString());
     }
 
+    // should split out adding the image and posting the user into two
     @Override
     public User postNewUser(RegisterUserRequest request) {
         System.out.println("Getting imageUrl");
@@ -47,14 +50,18 @@ public class UserDynamoDAO implements IUserDAO {
         return new User(request.getFirstName(), request.getLastName(), request.getUsername(), imageUrl);
     }
 
-    private PutItemOutcome postNewUser(String alias, String firstName, String lastName, String imageUrl) {
+    @Override
+    public PutItemOutcome postNewUser(String alias, String firstName, String lastName, String imageUrl) {
         return DynamoDBHelper.getInstance().getUsersTable()
                 .putItem(
                         new Item()
                                 .withPrimaryKey("user-alias", alias)
                                 .withString("first-name", firstName)
                                 .withString("last-name", lastName)
-                                .withString("image-url", imageUrl));
+                                .withString("image-url", imageUrl)
+                                .withInt("followers", 0)
+                                .withInt("following", 0)
+                );
     }
 
     @Override
@@ -112,6 +119,30 @@ public class UserDynamoDAO implements IUserDAO {
             outcome = DynamoDBHelper.getInstance().getDB().batchWriteItemUnprocessed(unprocessedItems);
             logger.log(Logger.Level.DEBUG, "Wrote more Users");
         }
+    }
+
+    @Override
+    public void adjustFollowingValue(boolean isIncrement, String alias) {
+        ValueMap valueMap = new ValueMap().withInt(":val", getIntValueOfBoolean(isIncrement));
+        UpdateItemSpec updateItemSpec = new UpdateItemSpec().withPrimaryKey("user-alias", alias)
+                .withUpdateExpression("set user.following = user.following + :val")
+                .withValueMap(valueMap);
+
+        DynamoDBHelper.getInstance().getUsersTable().updateItem(updateItemSpec);
+    }
+
+    @Override
+    public void adjustFollowersValue(boolean isIncrement, String alias) {
+        ValueMap valueMap = new ValueMap().withInt(":val", getIntValueOfBoolean(isIncrement));
+        UpdateItemSpec updateItemSpec = new UpdateItemSpec().withPrimaryKey("user-alias", alias)
+                .withUpdateExpression("set user.followers = user.followers + :val")
+                .withValueMap(valueMap);
+
+        DynamoDBHelper.getInstance().getUsersTable().updateItem(updateItemSpec);
+    }
+
+    private int getIntValueOfBoolean(boolean isIncrement) {
+        return isIncrement? 1 : -1;
     }
 
 //    private List<User> getUsersFromListOfAliases(Collection<String> aliases, String table) {
