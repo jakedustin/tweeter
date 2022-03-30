@@ -152,7 +152,7 @@ public class UserDynamoDAO implements IUserDAO {
     public int getNumFollowers(String alias) {
         GetItemOutcome getItemOutcome = DynamoDBHelper.getInstance().getUsersTable()
                 .getItemOutcome("user-alias", alias);
-        return getItemOutcome.getItem().getInt("following");
+        return getItemOutcome.getItem().getInt("followers");
     }
 
     private int getIntValueOfBoolean(boolean isIncrement) {
