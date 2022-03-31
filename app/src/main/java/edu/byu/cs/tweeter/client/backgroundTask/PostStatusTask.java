@@ -10,6 +10,7 @@ import java.io.IOException;
 import edu.byu.cs.tweeter.client.model.net.ServerFacade;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.Status;
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 import edu.byu.cs.tweeter.model.net.TweeterRemoteException;
 import edu.byu.cs.tweeter.model.net.request.PostStatusRequest;
 import edu.byu.cs.tweeter.model.net.response.PostStatusResponse;
@@ -57,7 +58,16 @@ public class PostStatusTask implements Runnable {
     }
 
     private PostStatusResponse postStatus(AuthToken authToken, Status status) throws IOException, TweeterRemoteException {
-        PostStatusRequest request = new PostStatusRequest(authToken, status);
+        PostStatusRequest request = new PostStatusRequest(
+                authToken,
+                new StatusDTO(
+                        status.getPost(),
+                        status.getDate(),
+                        status.getUser().getAlias(),
+                        status.getUrls(),
+                        status.getMentions()
+                )
+        );
         ServerFacade server = new ServerFacade();
         return server.postStatus(request, "poststatus");
     }

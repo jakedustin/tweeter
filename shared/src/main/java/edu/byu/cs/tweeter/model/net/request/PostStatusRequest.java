@@ -1,18 +1,17 @@
 package edu.byu.cs.tweeter.model.net.request;
 
 import edu.byu.cs.tweeter.model.domain.AuthToken;
-import edu.byu.cs.tweeter.model.domain.Status;
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 
 public class PostStatusRequest {
     private AuthToken authToken;
-    private Status status;
+    private StatusDTO status;
 
     public PostStatusRequest() {}
 
-    public PostStatusRequest(AuthToken authToken, Status status) {
+    public PostStatusRequest(AuthToken authToken, StatusDTO status) {
         this.authToken = authToken;
         this.status = status;
-        this.status.user.setImageBytes(null);
     }
 
     public AuthToken getAuthToken() {
@@ -23,11 +22,11 @@ public class PostStatusRequest {
         this.authToken = authToken;
     }
 
-    public Status getStatus() {
+    public StatusDTO getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(StatusDTO status) {
         this.status = status;
     }
 }

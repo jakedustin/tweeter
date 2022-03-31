@@ -1,8 +1,10 @@
 package edu.byu.cs.tweeter.server.dao.interfaces;
 
-import edu.byu.cs.tweeter.model.net.request.GetFeedRequest;
-import edu.byu.cs.tweeter.model.net.response.GetFeedResponse;
+import java.util.List;
+
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 
 public interface IFeedDAO {
-    GetFeedResponse getFeed(GetFeedRequest request) throws Exception;
+    List<StatusDTO> getFeed(String userAlias, int limit, StatusDTO lastStatus) throws Exception;
+    void postStatusToFeed(StatusDTO status, String userAlias) throws Exception;
 }

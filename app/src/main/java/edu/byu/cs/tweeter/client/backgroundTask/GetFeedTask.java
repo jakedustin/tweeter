@@ -13,6 +13,7 @@ import edu.byu.cs.tweeter.client.model.net.ServerFacade;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.Status;
 import edu.byu.cs.tweeter.model.domain.User;
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 import edu.byu.cs.tweeter.model.net.TweeterRemoteException;
 import edu.byu.cs.tweeter.model.net.request.GetFeedRequest;
 import edu.byu.cs.tweeter.model.net.response.GetFeedResponse;
@@ -83,7 +84,18 @@ public class GetFeedTask implements Runnable {
 
     private GetFeedResponse getFeed(AuthToken authToken, User user, int limit, Status lastStatus)
             throws IOException, TweeterRemoteException {
-        GetFeedRequest request = new GetFeedRequest(authToken, user, limit, lastStatus);
+        GetFeedRequest request = new GetFeedRequest(
+                authToken,
+                user,
+                limit,
+                new StatusDTO(
+                        lastStatus.getPost(),
+                        lastStatus.getDate(),
+                        lastStatus.getUser().getAlias(),
+                        lastStatus.getUrls(),
+                        lastStatus.getMentions()
+                )
+        );
         ServerFacade server = new ServerFacade();
         GetFeedResponse response = server.getFeed(request, "getfeed");
         return response;

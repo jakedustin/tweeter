@@ -165,6 +165,36 @@ public class FollowDynamoDAO implements IFollowDAO {
         return new Pair<>(followers, hasMorePages);
     }
 
+    @Override
+    public List<String> getAllFollowerAliases(String followeeAlias) {
+        List<String> followers = new ArrayList<>();
+        HashMap<String, Object> valueMap = new HashMap<>();
+        valueMap.put(":F", followeeAlias);
+
+        System.out.println("Creating query spec");
+        QuerySpec querySpec = new QuerySpec()
+                .withValueMap(valueMap)
+                .withKeyConditionExpression("followee_handle = :F")
+                .withScanIndexForward(true);
+
+        ItemCollection<QueryOutcome> items = DynamoDBHelper.getInstance()
+                .getFollowTable()
+                .getIndex("follows_index")
+                .query(querySpec);
+        System.out.println("Created query spec");
+
+        System.out.println("Creating an iterator");
+        Iterator<Item> iterator = items.iterator();
+        Item item;
+        while (iterator.hasNext()) {
+            System.out.println("Iterator has next");
+            item = iterator.next();
+            followers.add(item.getString("follower_handle"));
+            System.out.println("Iterator returned the following follower_alias: " + item);
+        }
+
+        return followers;
+    }
 
     @Override
     public int getFollowingCount(String followerAlias) {

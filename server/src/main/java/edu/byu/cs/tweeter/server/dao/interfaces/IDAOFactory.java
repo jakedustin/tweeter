@@ -7,5 +7,4 @@ public interface IDAOFactory {
     IFollowDAO getFollowDAO();
     IFeedDAO getFeedDAO();
     IStoryDAO getStoryDAO();
-    IStatusDAO getStatusDAO();
 }

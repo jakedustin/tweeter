@@ -1,8 +1,7 @@
 package edu.byu.cs.tweeter.model.net.request;
 
 import edu.byu.cs.tweeter.model.domain.AuthToken;
-import edu.byu.cs.tweeter.model.domain.Status;
-import edu.byu.cs.tweeter.model.domain.User;
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 
 public class GetFeedRequest {
     /**
@@ -13,7 +12,7 @@ public class GetFeedRequest {
      * The user whose feed is being retrieved.
      * (This can be any user, not just the currently logged-in user.)
      */
-    private User targetUser;
+    private String userAlias;
     /**
      * Maximum number of statuses to return (i.e., page size).
      */
@@ -22,14 +21,13 @@ public class GetFeedRequest {
      * The last status returned in the previous page of results (can be null).
      * This allows the new page to begin where the previous page ended.
      */
-    private Status lastStatus;
+    private StatusDTO lastStatus;
 
     public GetFeedRequest() {}
 
-    public GetFeedRequest(AuthToken authToken, User targetUser, int limit, Status lastStatus) {
+    public GetFeedRequest(AuthToken authToken, String userAlias, int limit, StatusDTO lastStatus) {
         this.authToken = authToken;
-        this.targetUser = targetUser;
-        this.targetUser.setImageBytes(null);
+        this.userAlias = userAlias;
         this.limit = limit;
         this.lastStatus = lastStatus;
     }
@@ -42,12 +40,12 @@ public class GetFeedRequest {
         this.authToken = authToken;
     }
 
-    public User getTargetUser() {
-        return targetUser;
+    public String getUserAlias() {
+        return userAlias;
     }
 
-    public void setTargetUser(User targetUser) {
-        this.targetUser = targetUser;
+    public void setUserAlias(String userAlias) {
+        this.userAlias = userAlias;
     }
 
     public int getLimit() {
@@ -58,11 +56,11 @@ public class GetFeedRequest {
         this.limit = limit;
     }
 
-    public Status getLastStatus() {
+    public StatusDTO getLastStatus() {
         return lastStatus;
     }
 
-    public void setLastStatus(Status lastStatus) {
+    public void setLastStatus(StatusDTO lastStatus) {
         this.lastStatus = lastStatus;
     }
 }

@@ -11,6 +11,8 @@ import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 
 import java.lang.System.Logger;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +63,8 @@ public class UserDynamoDAO implements IUserDAO {
                                 .withString("image-url", imageUrl)
                                 .withInt("followers", 0)
                                 .withInt("following", 0)
+                                .withList("feed", new ArrayList<Map<String, Object>>())
+                                .withList("story", new ArrayList<Map<String, Object>>())
                 );
     }
 
@@ -75,6 +79,37 @@ public class UserDynamoDAO implements IUserDAO {
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    @Override
+    public void addPostToFeed(List<String> userAliases, Map<String, Object> statusMap) throws Exception {
+        // appends a new status map to the end of the feed map
+        List<Map<String, Object>> inputList = Arrays.asList(statusMap);
+        ValueMap valueMap = new ValueMap().withList(":vals", inputList);
+        List<UpdateItemSpec> specs = new ArrayList<>();
+        for (String user : userAliases) {
+            UpdateItemSpec updateItemSpec = new UpdateItemSpec()
+                    .withPrimaryKey("user-alias", user)
+                    .withUpdateExpression("SET feed = list_append(:vals, feed)")
+                    .withValueMap(valueMap);
+
+            DynamoDBHelper.getInstance().getUsersTable().updateItem(updateItemSpec);
+        }
+    }
+
+    @Override
+    public void addPostToStory(String alias, Map<String, Object> statusMap) throws Exception {
+        // appends a new status map to the end of the feed map
+        List<Map<String, Object>> inputList = Arrays.asList(statusMap);
+        ValueMap valueMap = new ValueMap().withList(":vals", inputList);
+        List<UpdateItemSpec> specs = new ArrayList<>();
+        UpdateItemSpec updateItemSpec = new UpdateItemSpec()
+                .withPrimaryKey("user-alias", alias)
+                .withUpdateExpression("SET story = list_append(:vals, story)")
+                .withValueMap(valueMap);
+
+        DynamoDBHelper.getInstance().getUsersTable().updateItem(updateItemSpec);
+
     }
 
     @Override

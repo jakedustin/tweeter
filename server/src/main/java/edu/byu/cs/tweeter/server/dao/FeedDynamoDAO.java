@@ -9,26 +9,28 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import edu.byu.cs.tweeter.model.domain.Status;
-import edu.byu.cs.tweeter.model.domain.User;
-import edu.byu.cs.tweeter.model.net.request.GetFeedRequest;
-import edu.byu.cs.tweeter.model.net.response.GetFeedResponse;
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 import edu.byu.cs.tweeter.server.dao.helpers.DynamoDBHelper;
 import edu.byu.cs.tweeter.server.dao.interfaces.IFeedDAO;
 
 public class FeedDynamoDAO implements IFeedDAO {
 
     @Override
-    public GetFeedResponse getFeed(GetFeedRequest request) throws Exception {
-        System.out.println("FeedDynamoDAO : getFeed : attempting to get feed for " + request.getTargetUser().getAlias());
+    public List<StatusDTO> getFeed(String userAlias, int limit, StatusDTO lastStatus) throws Exception {
+        System.out.println("FeedDynamoDAO : getFeed : attempting to get feed for " + userAlias);
         // need to paginate results
         QuerySpec querySpec = new QuerySpec()
-                .withKeyConditionExpression("user-alias = " + request.getTargetUser().getAlias())
+                .withKeyConditionExpression("user-alias = " + userAlias)
                 .withScanIndexForward(true)
-                .withMaxResultSize(request.getLimit())
-                .withExclusiveStartKey("last-status", request.getLastStatus().getUser().getAlias());
+                .withMaxResultSize(limit)
+                .withExclusiveStartKey(
+                        "user-alias",
+                        lastStatus.getUserAlias(),
+                        "datetime",
+                        lastStatus.getDatetime()
+                );
 
-        ArrayList<Status> feed = new ArrayList<>();
+        ArrayList<StatusDTO> feed = new ArrayList<>();
         ItemCollection<QueryOutcome> items;
         Iterator<Item> iterator;
         Item item;
@@ -38,13 +40,9 @@ public class FeedDynamoDAO implements IFeedDAO {
             iterator = items.iterator();
             while (iterator.hasNext()) {
                 item = iterator.next();
-                feed.add(new Status(
+                feed.add(new StatusDTO(
                         item.get("post").toString(),
-                        new User(
-                                item.get("user.first-name").toString(),
-                                item.get("user.last-name").toString(),
-                                item.get("user.username").toString(),
-                                item.get("user.image-url").toString()),
+                        item.get("user-alias").toString(),
                         item.get("dt").toString(),
                         (List<String>) item.get("urls"),
                         (List<String>) item.get("mentions")));
@@ -52,9 +50,12 @@ public class FeedDynamoDAO implements IFeedDAO {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("FeedDynamoDAO : getFeed : successfully retrieved feed for " + request.getTargetUser().getAlias());
-        GetFeedResponse response = new GetFeedResponse(true, false);
-        response.setStatusList(feed);
-        return response;
+        System.out.println("FeedDynamoDAO : getFeed : successfully retrieved feed for " + userAlias);
+        return feed;
+    }
+
+    @Override
+    public void postStatusToFeed(StatusDTO status, String userAlias) throws Exception {
+
     }
 }

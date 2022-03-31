@@ -1,8 +1,8 @@
 package edu.byu.cs.tweeter.model.net.response;
 
-import edu.byu.cs.tweeter.model.domain.Status;
-
 import java.util.List;
+
+import edu.byu.cs.tweeter.model.domain.Status;
 
 public class GetFeedResponse extends PagedResponse {
     private List<Status> statusList;
@@ -15,8 +15,9 @@ public class GetFeedResponse extends PagedResponse {
         super(success, hasMorePages);
     }
 
-    public GetFeedResponse(boolean success, String message, boolean hasMorePages) {
+    public GetFeedResponse(boolean success, String message, List<Status> statusList, boolean hasMorePages) {
         super(success, message, hasMorePages);
+        this.statusList = statusList;
     }
 
     public List<Status> getStatusList() {
