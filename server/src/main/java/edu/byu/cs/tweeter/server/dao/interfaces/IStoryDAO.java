@@ -1,11 +1,12 @@
 package edu.byu.cs.tweeter.server.dao.interfaces;
 
+import java.util.List;
+
 import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
-import edu.byu.cs.tweeter.model.net.request.GetStoryRequest;
-import edu.byu.cs.tweeter.model.net.response.GetStoryResponse;
+import edu.byu.cs.tweeter.server.util.Pair;
 
 public interface IStoryDAO {
-    GetStoryResponse getStory(GetStoryRequest request) throws Exception;
+    Pair<List<StatusDTO>, Boolean> getStory(String userAlias, int limit, StatusDTO lastStatus) throws Exception;
     void postStatusToStory(StatusDTO status) throws Exception;
 
 }

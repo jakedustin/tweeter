@@ -1,9 +1,13 @@
 package edu.byu.cs.tweeter.server.service;
 
+import java.util.List;
+
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 import edu.byu.cs.tweeter.model.net.request.GetStoryRequest;
 import edu.byu.cs.tweeter.model.net.response.GetStoryResponse;
 import edu.byu.cs.tweeter.server.dao.interfaces.IDAOFactory;
 import edu.byu.cs.tweeter.server.dao.interfaces.IStoryDAO;
+import edu.byu.cs.tweeter.server.util.Pair;
 
 public class GetStoryService {
     IStoryDAO storyDAO;
@@ -14,7 +18,8 @@ public class GetStoryService {
 
     public GetStoryResponse getStory(GetStoryRequest request) {
         try {
-            return storyDAO.getStory(request);
+            Pair<List<StatusDTO>, Boolean> results;
+            return null;
         } catch (Exception e) {
             e.printStackTrace();
             return new GetStoryResponse(e.getMessage());

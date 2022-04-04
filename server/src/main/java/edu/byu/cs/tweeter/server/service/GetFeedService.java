@@ -13,6 +13,7 @@ import edu.byu.cs.tweeter.model.net.response.GetFeedResponse;
 import edu.byu.cs.tweeter.server.dao.interfaces.IDAOFactory;
 import edu.byu.cs.tweeter.server.dao.interfaces.IFeedDAO;
 import edu.byu.cs.tweeter.server.dao.interfaces.IUserDAO;
+import edu.byu.cs.tweeter.server.util.Pair;
 
 public class GetFeedService {
     private IFeedDAO feedDAO;
@@ -25,12 +26,19 @@ public class GetFeedService {
 
     public GetFeedResponse getFeed(GetFeedRequest request) {
         try {
-            List<StatusDTO> feed = feedDAO.getFeed(request.getUserAlias(), request.getLimit(), request.getLastStatus());
+            Pair<List<StatusDTO>, Boolean> results = feedDAO.getFeed(
+                    request.getUserAlias(),
+                    request.getLimit(),
+                    request.getLastStatus()
+            );
+            List<StatusDTO> feed = results.getFirst();
+            System.out.println("Successfully retrieved " + feed.size() + " statuses");
             List<Status> feedWithUsers = new ArrayList<>();
             Map<String, User> usersByAlias = new HashMap<>();
 
             for (StatusDTO status : feed) {
                 if (!usersByAlias.containsKey(status.getUserAlias())) {
+                    System.out.println("Attempting to get user " + status.getUserAlias());
                     usersByAlias.put(status.getUserAlias(), userDAO.getUser(status.getUserAlias()));
                 }
 
@@ -50,7 +58,7 @@ public class GetFeedService {
                     true,
                     "Successfully retrieved users",
                     feedWithUsers,
-                    true
+                    results.getSecond()
             );
         } catch (Exception e) {
             e.printStackTrace();

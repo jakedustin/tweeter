@@ -86,7 +86,7 @@ public class GetFeedTask implements Runnable {
             throws IOException, TweeterRemoteException {
         GetFeedRequest request = new GetFeedRequest(
                 authToken,
-                user,
+                user.getAlias(),
                 limit,
                 new StatusDTO(
                         lastStatus.getPost(),

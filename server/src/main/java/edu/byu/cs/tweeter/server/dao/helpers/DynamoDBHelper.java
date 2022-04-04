@@ -13,6 +13,7 @@ public class DynamoDBHelper {
     private static final String FEED_TN = "feed";
     private static final String FOLLOW_TN = "follows";
     private static final String STATUS_TN = "statuses";
+    private static final String STORY_TN = "story";
     private static DynamoDB db = null;
 
     private DynamoDBHelper() {
@@ -60,6 +61,10 @@ public class DynamoDBHelper {
         return getTable(FEED_TN);
     }
 
+    public Table getStoryTable() {
+        return getTable(STORY_TN);
+    }
+
     public Table getFollowTable() {
         return getTable(FOLLOW_TN);
     }
@@ -68,5 +73,7 @@ public class DynamoDBHelper {
         return FOLLOW_TN;
     }
 
-    public Table getStatusTable() { return getTable(STATUS_TN); }
+    public static String getStoryTableName() {
+        return STORY_TN;
+    }
 }
