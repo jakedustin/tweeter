@@ -2,6 +2,7 @@ package edu.byu.cs.tweeter.server.dao;
 
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
+import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
@@ -19,6 +20,15 @@ import edu.byu.cs.tweeter.server.util.Pair;
 
 public class FeedDynamoDAO implements IFeedDAO {
 
+//    public static void main(String[] args) {
+//        FeedDynamoDAO dao = new FeedDynamoDAO();
+//        try {
+//            dao.getFeed("@jakeydus", 10, new StatusDTO("", "04/04/2022 17:17 PM", "@guy1", new ArrayList<String>(), new ArrayList<String>()));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+
     @Override
     public Pair<List<StatusDTO>, Boolean> getFeed(String userAlias, int limit, StatusDTO lastStatus) throws Exception {
         System.out.println("FeedDynamoDAO : getFeed : attempting to get feed for " + userAlias);
@@ -35,17 +45,20 @@ public class FeedDynamoDAO implements IFeedDAO {
 
         if (lastStatus != null) {
                 querySpec = querySpec.withExclusiveStartKey(
-                    "user-alias",
-                    lastStatus.getUserAlias(),
-                    "datetime",
-                    lastStatus.getDatetime());
+                        new PrimaryKey(
+                                "user-alias",
+                                userAlias,
+                                "datetime",
+                                lastStatus.getDatetime()
+                        )
+                );
         }
 
         ArrayList<StatusDTO> feed = new ArrayList<>();
         ItemCollection<QueryOutcome> items;
         Iterator<Item> iterator;
         Item item;
-        boolean hasMorePages = true;
+        boolean hasMorePages = false;
 
         try {
             items = DynamoDBHelper.getInstance().getFeedTable().query(querySpec);
@@ -59,7 +72,9 @@ public class FeedDynamoDAO implements IFeedDAO {
                         (List<String>) item.get("urls"),
                         (List<String>) item.get("mentions")));
             }
-            hasMorePages = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey() != null;
+            if (items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey() != null) {
+                hasMorePages = true;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -31,7 +31,6 @@ public class RegisteredDynamoDAO implements IRegisteredUserDAO {
         } catch (Exception e) {
             System.out.println(e.getMessage());
             e.printStackTrace();
-            // TODO: improve error handling
             throw new Exception("Unable to register user.");
         }
         return new RegisterUserResponse(null, null);

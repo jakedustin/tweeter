@@ -13,6 +13,7 @@ import edu.byu.cs.tweeter.client.model.net.ServerFacade;
 import edu.byu.cs.tweeter.model.domain.AuthToken;
 import edu.byu.cs.tweeter.model.domain.Status;
 import edu.byu.cs.tweeter.model.domain.User;
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 import edu.byu.cs.tweeter.model.net.TweeterRemoteException;
 import edu.byu.cs.tweeter.model.net.request.GetStoryRequest;
 import edu.byu.cs.tweeter.model.net.response.GetStoryResponse;
@@ -88,7 +89,28 @@ public class GetStoryTask implements Runnable {
     }
 
     private Pair<List<Status>, Boolean> getStory() throws IOException, TweeterRemoteException {
-        GetStoryRequest request = new GetStoryRequest(this.authToken, this.targetUser, this.limit, this.lastStatus);
+        GetStoryRequest request;
+        if (this.lastStatus != null) {
+            request = new GetStoryRequest(
+                    this.authToken,
+                    this.targetUser.getAlias(),
+                    this.limit,
+                    new StatusDTO(
+                            this.lastStatus.getPost(),
+                            this.lastStatus.getDate(),
+                            this.lastStatus.getUser().getAlias(),
+                            this.lastStatus.getUrls(),
+                            this.lastStatus.getMentions()
+                    )
+            );
+        } else {
+            request = new GetStoryRequest(
+                    this.authToken,
+                    this.targetUser.getAlias(),
+                    this.limit,
+                    null
+            );
+        }
         ServerFacade server = new ServerFacade();
         GetStoryResponse response = server.getStory(request, "getstory");
         return new Pair<>(response.getStory(), response.getHasMorePages());

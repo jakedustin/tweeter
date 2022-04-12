@@ -84,18 +84,28 @@ public class GetFeedTask implements Runnable {
 
     private GetFeedResponse getFeed(AuthToken authToken, User user, int limit, Status lastStatus)
             throws IOException, TweeterRemoteException {
-        GetFeedRequest request = new GetFeedRequest(
-                authToken,
-                user.getAlias(),
-                limit,
-                new StatusDTO(
-                        lastStatus.getPost(),
-                        lastStatus.getDate(),
-                        lastStatus.getUser().getAlias(),
-                        lastStatus.getUrls(),
-                        lastStatus.getMentions()
-                )
-        );
+        GetFeedRequest request;
+        if (lastStatus != null) {
+            request = new GetFeedRequest(
+                    authToken,
+                    user.getAlias(),
+                    limit,
+                    new StatusDTO(
+                            lastStatus.getPost(),
+                            lastStatus.getDate(),
+                            lastStatus.getUser().getAlias(),
+                            lastStatus.getUrls(),
+                            lastStatus.getMentions()
+                    )
+            );
+        } else {
+            request = new GetFeedRequest(
+                    authToken,
+                    user.getAlias(),
+                    limit,
+                    null
+            );
+        }
         ServerFacade server = new ServerFacade();
         GetFeedResponse response = server.getFeed(request, "getfeed");
         return response;

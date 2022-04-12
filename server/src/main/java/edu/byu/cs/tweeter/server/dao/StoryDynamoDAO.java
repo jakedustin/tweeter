@@ -2,9 +2,12 @@ package edu.byu.cs.tweeter.server.dao;
 
 import com.amazonaws.services.dynamodbv2.document.Item;
 import com.amazonaws.services.dynamodbv2.document.ItemCollection;
+import com.amazonaws.services.dynamodbv2.document.PrimaryKey;
 import com.amazonaws.services.dynamodbv2.document.PutItemOutcome;
 import com.amazonaws.services.dynamodbv2.document.QueryOutcome;
 import com.amazonaws.services.dynamodbv2.document.spec.QuerySpec;
+import com.amazonaws.services.dynamodbv2.document.utils.NameMap;
+import com.amazonaws.services.dynamodbv2.document.utils.ValueMap;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -19,18 +22,24 @@ public class StoryDynamoDAO implements IStoryDAO {
     @Override
     public Pair<List<StatusDTO>, Boolean> getStory(String userAlias, int limit, StatusDTO lastStatus) throws Exception {
         System.out.println("StoryDynamoDAO : getStory : attempting to get story for " + userAlias);
+        NameMap nameMap = new NameMap().with("#alias", "user-alias");
+        ValueMap valueMap = new ValueMap().with(":user", userAlias);
         // need to paginate results
         QuerySpec querySpec = new QuerySpec()
-                .withKeyConditionExpression("user-alias = " + userAlias)
+                .withNameMap(nameMap)
+                .withValueMap(valueMap)
+                .withKeyConditionExpression("#alias = :user")
                 .withScanIndexForward(true)
                 .withMaxResultSize(limit);
 
         if (lastStatus != null) {
             querySpec = querySpec.withExclusiveStartKey(
-                    "user-alias",
-                    lastStatus.getUserAlias(),
-                    "timestamp",
-                    lastStatus.getDatetime()
+                    new PrimaryKey(
+                            "user-alias",
+                            lastStatus.getUserAlias(),
+                            "timestamp",
+                            lastStatus.getDatetime()
+                    )
             );
         }
 
@@ -38,7 +47,7 @@ public class StoryDynamoDAO implements IStoryDAO {
         ItemCollection<QueryOutcome> items;
         Iterator<Item> iterator;
         Item item;
-        boolean hasMorePages = true;
+        boolean hasMorePages = false;
 
         try {
             items = DynamoDBHelper.getInstance().getStoryTable().query(querySpec);
@@ -47,12 +56,14 @@ public class StoryDynamoDAO implements IStoryDAO {
                 item = iterator.next();
                 story.add(new StatusDTO(
                         item.get("post").toString(),
-                        item.get("user-alias").toString(),
                         item.get("timestamp").toString(),
+                        item.get("user-alias").toString(),
                         (List<String>) item.get("urls"),
                         (List<String>) item.get("mentions")));
             }
-            hasMorePages = items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey() != null;
+            if (items.getLastLowLevelResult().getQueryResult().getLastEvaluatedKey() != null) {
+                hasMorePages = true;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

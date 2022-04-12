@@ -1,22 +1,19 @@
 package edu.byu.cs.tweeter.model.net.request;
 
 import edu.byu.cs.tweeter.model.domain.AuthToken;
-import edu.byu.cs.tweeter.model.domain.Status;
-import edu.byu.cs.tweeter.model.domain.User;
+import edu.byu.cs.tweeter.model.domain.dto.StatusDTO;
 
 public class GetStoryRequest {
     private AuthToken authToken;
-    private User targetUser;
+    private String userAlias;
     private int limit;
-    private Status lastStatus;
+    private StatusDTO lastStatus;
 
     public GetStoryRequest() {}
 
-    public GetStoryRequest(AuthToken authToken, User targetUser, int limit, Status lastStatus) {
+    public GetStoryRequest(AuthToken authToken, String userAlias, int limit, StatusDTO lastStatus) {
         this.authToken = authToken;
-        this.targetUser = targetUser;
-        // removes a headache for later by avoiding sending a ton of unnecessary information
-        this.targetUser.setImageBytes(null);
+        this.userAlias = userAlias;
         this.limit = limit;
         this.lastStatus = lastStatus;
     }
@@ -29,14 +26,6 @@ public class GetStoryRequest {
         this.authToken = authToken;
     }
 
-    public User getTargetUser() {
-        return targetUser;
-    }
-
-    public void setTargetUser(User targetUser) {
-        this.targetUser = targetUser;
-    }
-
     public int getLimit() {
         return limit;
     }
@@ -45,11 +34,19 @@ public class GetStoryRequest {
         this.limit = limit;
     }
 
-    public Status getLastStatus() {
+    public String getUserAlias() {
+        return userAlias;
+    }
+
+    public void setUserAlias(String userAlias) {
+        this.userAlias = userAlias;
+    }
+
+    public StatusDTO getLastStatus() {
         return lastStatus;
     }
 
-    public void setLastStatus(Status lastStatus) {
+    public void setLastStatus(StatusDTO lastStatus) {
         this.lastStatus = lastStatus;
     }
 }
