@@ -25,10 +25,13 @@ public class UserService {
     }
 
     public LoginResponse login(LoginRequest request) {
+        System.out.println("Attempting login");
         LoginResponse response;
         try {
+            System.out.println("Validating password");
             if (SecurityHelper.validatePassword(request.getPassword(),
                     registeredUserDAO.getHashedPassword(request))) {
+                System.out.println("Password validated.");
                 response = new LoginResponse(
                         userDAO.getUser(request.getUsername()),
                         authTokenDAO.generateNewToken(request.getUsername()));

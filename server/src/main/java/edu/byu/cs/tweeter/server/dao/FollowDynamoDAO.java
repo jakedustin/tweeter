@@ -74,7 +74,7 @@ public class FollowDynamoDAO implements IFollowDAO {
                     .withValueMap(valueMap)
                     .withKeyConditionExpression("follower_handle = :F")
                     .withScanIndexForward(true)
-                    .withMaxResultSize(DynamoDBHelper.PAGE_SIZE);
+                    .withMaxResultSize(limit);
             if (lastReturnedFollowee != null && !lastReturnedFollowee.equals("")) {
                 System.out.println("Adding exclusive start key");
                 querySpec = querySpec.withExclusiveStartKey(
@@ -125,7 +125,7 @@ public class FollowDynamoDAO implements IFollowDAO {
                     .withValueMap(valueMap)
                     .withKeyConditionExpression("followee_handle = :F")
                     .withScanIndexForward(true)
-                    .withMaxResultSize(DynamoDBHelper.PAGE_SIZE);
+                    .withMaxResultSize(limit);
             System.out.println("Created query spec");
             if (lastReturnedFollower != null && !lastReturnedFollower.equals("")) {
                 System.out.println("Adding exclusive start key");

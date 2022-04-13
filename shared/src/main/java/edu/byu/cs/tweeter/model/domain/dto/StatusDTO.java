@@ -60,4 +60,15 @@ public class StatusDTO {
     public void setMentions(List<String> mentions) {
         this.mentions = mentions;
     }
+
+    @Override
+    public String toString() {
+        return "StatusDTO{" +
+                "post='" + post + '\'' +
+                ", datetime='" + datetime + '\'' +
+                ", userAlias='" + userAlias + '\'' +
+                ", urls=" + urls +
+                ", mentions=" + mentions +
+                '}';
+    }
 }

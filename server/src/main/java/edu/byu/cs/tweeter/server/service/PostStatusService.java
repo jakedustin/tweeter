@@ -19,6 +19,7 @@ import edu.byu.cs.tweeter.server.dao.interfaces.IFeedDAO;
 import edu.byu.cs.tweeter.server.dao.interfaces.IFollowDAO;
 import edu.byu.cs.tweeter.server.dao.interfaces.IStoryDAO;
 import edu.byu.cs.tweeter.server.dao.interfaces.IUserDAO;
+import edu.byu.cs.tweeter.server.util.Pair;
 
 public class PostStatusService {
     private final IAuthTokenDAO authTokenDAO;
@@ -38,49 +39,56 @@ public class PostStatusService {
     }
 
     public PostStatusResponse postStatus(PostStatusRequest request) {
+        System.out.println("request.authToken : " + request.getAuthToken());
+        System.out.println("request.status : " + request.getStatus());
         try {
+            System.out.println("Verifying auth token");
             authTokenDAO.verifyAuthToken(request.getAuthToken());
             // post status to story
+            System.out.println("Posting status to story");
             storyDAO.postStatusToStory(request.getStatus());
 
+            System.out.println("Attempting to queue status");
             AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-            SendMessageResult result = sqs.sendMessage(createStatusQueueRequest(request.getStatus()));
+            SendMessageResult result = sqs.sendMessage(new SendMessageRequest()
+                    .withQueueUrl(statusQueueUrl)
+                    .withMessageBody(new Gson().toJson(request.getStatus(), StatusDTO.class)));
 
+            System.out.println("Status queued successfully.");
             return new PostStatusResponse(true);
         } catch (Exception ex) {
             return new PostStatusResponse(false, ex.getMessage());
         }
     }
 
-    public void batchAndQueueStatuses(PostStatusRequest request) {
-        // now the hard part
-        // create a request for posting the status to feeds
-        // will get the followers in the next handler
+    public void batchAndQueueStatuses(StatusDTO status) {
+        System.out.println("Batching and queueing.");
 
         try {
-            List<String> followerAliases = followDAO.getAllFollowerAliases(request.getStatus().getUserAlias());
-            List<String> batchedAliases = new ArrayList<>();
+            System.out.println("Getting the followers.");
+            // need to get these but paginate them
+            Pair<List<String>, Boolean> currentAliasList = new Pair<>(new ArrayList<>(), true);
             AmazonSQS sqs = AmazonSQSClientBuilder.defaultClient();
-            // need to create jobs for each group of 25 followers
-            for (String user : followerAliases) {
-                if (batchedAliases.size() != 25) {
-                    batchedAliases.add(user);
-                } else {
-                    SendMessageResult result = sqs.sendMessage(new SendMessageRequest()
-                            .withQueueUrl(feedQueueUrl)
-                            .withMessageBody(
-                                    new Gson()
-                                            .toJson(
-                                                    new PostStatusToFeedRequest(
-                                                            batchedAliases,
-                                                            request.getStatus()
-                                                    ),
-                                                    PostStatusToFeedRequest.class
-                                            )
-                            )
-                    );
-                    batchedAliases.clear();
-                }
+            String lastFolloweeAlias = "";
+            while (currentAliasList.getSecond()) {
+                System.out.println("Getting follower list");
+                currentAliasList = followDAO.getFollowers(status.getUserAlias(), 25, lastFolloweeAlias);
+                System.out.println("Attempting to submit batch");
+                SendMessageResult result = sqs.sendMessage(new SendMessageRequest()
+                        .withQueueUrl(feedQueueUrl)
+                        .withMessageBody(
+                                new Gson()
+                                        .toJson(
+                                                new PostStatusToFeedRequest(
+                                                        currentAliasList.getFirst(),
+                                                        status
+                                                ),
+                                                PostStatusToFeedRequest.class
+                                        )
+                        )
+                );
+                System.out.println("Message submitted successfully: " + result.getMessageId());
+                lastFolloweeAlias = currentAliasList.getFirst().get(24);
             }
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
@@ -95,12 +103,5 @@ public class PostStatusService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private SendMessageRequest createStatusQueueRequest(StatusDTO status) {
-        return new SendMessageRequest()
-                .withQueueUrl(statusQueueUrl)
-                .withMessageBody(new Gson().toJson(status, StatusDTO.class))
-                .withDelaySeconds(5);
     }
 }

@@ -16,6 +16,7 @@ import edu.byu.cs.tweeter.model.net.response.LoginResponse;
 public class LoginHandler implements RequestHandler<LoginRequest, LoginResponse> {
     @Override
     public LoginResponse handleRequest(LoginRequest loginRequest, Context context) {
+        System.out.println("Login request received.");
         UserService userService = new UserService(new DynamoDAOFactory());
         return userService.login(loginRequest);
     }
