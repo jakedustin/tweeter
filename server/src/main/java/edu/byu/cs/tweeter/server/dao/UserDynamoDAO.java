@@ -25,8 +25,8 @@ import edu.byu.cs.tweeter.server.dao.interfaces.IUserDAO;
 
 public class UserDynamoDAO implements IUserDAO {
     private final String DEFAULT_PROFILE_URL = "https://jd-cs340-profile-pictures.s3.us-west-2.amazonaws.com/%40default_profile";
-
     private final Logger logger = System.getLogger("UserDynamoDAO");
+
     @Override
     public User getUser(String username) {
 //        String imageUrl = S3ProfilePictureHelper.getInstance().getPublicUrl(username);
